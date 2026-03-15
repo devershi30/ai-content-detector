@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Content Detector - Academic Paper Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .ai-high { background: linear-gradient(135deg, #ff6b6b, #ff8e53); }
+        .ai-medium { background: linear-gradient(135deg, #feca57, #ff9ff3); }
+        .ai-low { background: linear-gradient(135deg, #48dbfb, #0abde3); }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-robot text-3xl"></i>
+                    <div>
+                        <h1 class="text-2xl font-bold">AI Content Detector</h1>
+                        <p class="text-sm opacity-90">Academic Paper Analysis Tool</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm">Turnitin-Level Accuracy</span>
+                    <i class="fas fa-shield-alt text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="grid lg:grid-cols-2 gap-8">
+            <!-- Input Section -->
+            <div class="space-y-6">
+                <div class="glass-effect rounded-xl p-6 shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-edit text-purple-600 mr-2"></i>
+                        Input Your Text
+                    </h2>
+                    
+                    <!-- Text Input -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Paste your essay or paper text:
+                        </label>
+                        <textarea 
+                            id="textInput" 
+                            rows="8" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                            placeholder="Paste your English essay or paper content here..."></textarea>
+                        <div class="mt-2 text-sm text-gray-500 flex justify-between">
+                            <span><span id="charCount">0</span> characters | <span id="wordCount">0</span> / 1200 words</span>
+                            <span id="wordLimitWarning" class="text-red-600 hidden">Word limit exceeded!</span>
+                        </div>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Or upload a file:
+                        </label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-500 transition-colors">
+                            <input type="file" id="fileInput" accept=".txt,.docx,.pdf" class="hidden">
+                            <label for="fileInput" class="cursor-pointer">
+                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                                <p class="text-sm text-gray-600">Click to upload or drag and drop</p>
+                                <p class="text-xs text-gray-500 mt-1">TXT, DOCX, PDF (Max 16MB)</p>
+                            </label>
+                            <div id="fileInfo" class="mt-3 text-sm text-green-600 hidden"></div>
+                        </div>
+                    </div>
+
+                    <!-- Analyze Buttons -->
+                    <div class="flex flex-col space-y-3">
+                        <div class="flex space-x-3">
+                            <button 
+                                id="analyzeBtn" 
+                                class="flex-1 gradient-bg text-white py-3 px-6 rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center justify-center space-x-2">
+                                <i class="fas fa-search"></i>
+                                <span>Analyze Content</span>
+                            </button>
+                            <button 
+                                id="sentenceAnalysisBtn" 
+                                class="flex-1 bg-orange-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-orange-700 transition-opacity flex items-center justify-center space-x-2">
+                                <i class="fas fa-highlighter"></i>
+                                <span>Analyze Sentences</span>
+                            </button>
+                        </div>
+                        <button 
+                            id="plagiarismBtn" 
+                            class="w-full bg-red-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-red-700 transition-opacity flex items-center justify-center space-x-2">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Check Plagiarism</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Features Info -->
+                <div class="glass-effect rounded-xl p-6 shadow-lg">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center">
+                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                        Detection Features
+                    </h3>
+                    <ul class="space-y-2 text-sm">
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                            <span>Multi-model ensemble approach for higher accuracy</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                            <span>Linguistic pattern analysis</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                            <span>Vocabulary diversity assessment</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                            <span>Sentence structure analysis</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                            <span>Real-time processing</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="space-y-6">
+                <div id="resultsContainer" class="hidden">
+                    <!-- Main Result Card -->
+                    <div class="glass-effect rounded-xl p-6 shadow-lg fade-in">
+                        <h2 class="text-xl font-semibold mb-4 flex items-center">
+                            <i class="fas fa-chart-line text-purple-600 mr-2"></i>
+                            Analysis Results
+                        </h2>
+                        
+                        <!-- AI Probability Display -->
+                        <div class="text-center mb-6">
+                            <div class="relative inline-flex items-center justify-center">
+                                <div class="text-6xl font-bold" id="probabilityDisplay">0%</div>
+                                <div class="absolute -bottom-6 left-0 right-0">
+                                    <span class="text-sm text-gray-600">AI Probability</span>
+                                </div>
+                            </div>
+                            <div class="mt-8">
+                                <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                                    <div id="probabilityBar" class="h-full transition-all duration-1000 ease-out"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Confidence Level -->
+                        <div class="mb-4 p-4 rounded-lg" id="confidenceBadge">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Confidence Level:</span>
+                                <span id="confidenceText" class="font-semibold"></span>
+                            </div>
+                        </div>
+
+                        <!-- Analysis Text -->
+                        <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                            <h4 class="font-medium mb-2">Analysis:</h4>
+                            <p id="analysisText" class="text-sm text-gray-700"></p>
+                        </div>
+
+                        <!-- Statistics -->
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div class="text-center p-3 bg-purple-50 rounded-lg">
+                                <div class="text-2xl font-bold text-purple-600" id="textLength">0</div>
+                                <div class="text-xs text-gray-600">Characters</div>
+                            </div>
+                            <div class="text-center p-3 bg-blue-50 rounded-lg">
+                                <div class="text-2xl font-bold text-blue-600" id="wordCountResult">0</div>
+                                <div class="text-xs text-gray-600">Words</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sentence Analysis Results -->
+                <div id="sentenceAnalysisResults" class="hidden">
+                    <div class="glass-effect rounded-xl p-6 shadow-lg fade-in">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-highlighter text-orange-600 mr-2"></i>
+                            Sentence-Level Analysis
+                        </h3>
+                        
+                        <!-- Summary Stats -->
+                        <div class="grid grid-cols-3 gap-4 mb-6">
+                            <div class="text-center p-3 bg-blue-50 rounded-lg">
+                                <div class="text-sm text-gray-600 mb-1">Slightly AI</div>
+                                <div class="text-2xl font-bold text-blue-600" id="slightlyCount">0</div>
+                            </div>
+                            <div class="text-center p-3 bg-yellow-50 rounded-lg">
+                                <div class="text-sm text-gray-600 mb-1">High AI</div>
+                                <div class="text-2xl font-bold text-yellow-600" id="highCount">0</div>
+                            </div>
+                            <div class="text-center p-3 bg-red-50 rounded-lg">
+                                <div class="text-sm text-gray-600 mb-1">Very High AI</div>
+                                <div class="text-2xl font-bold text-red-600" id="veryHighCount">0</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Highlighted Text -->
+                        <div class="mb-6">
+                            <h4 class="font-medium mb-2 text-gray-700">Highlighted Text:</h4>
+                            <div id="highlightedText" class="p-4 bg-gray-50 rounded-lg text-sm leading-relaxed max-h-64 overflow-y-auto"></div>
+                        </div>
+                        
+                        <!-- Sentence Details -->
+                        <div class="space-y-4">
+                            <div id="sentenceDetails"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Analysis -->
+                    <div class="glass-effect rounded-xl p-6 shadow-lg fade-in">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-microscope text-purple-600 mr-2"></i>
+                            Detailed Analysis
+                        </h3>
+                        
+                        <!-- Model Scores -->
+                        <div id="modelScoresContainer" class="mb-4">
+                            <h4 class="font-medium mb-2">Model Scores:</h4>
+                            <div id="modelScoresList" class="space-y-2"></div>
+                        </div>
+
+                        <!-- Linguistic Features -->
+                        <div id="featuresContainer">
+                            <h4 class="font-medium mb-2">Linguistic Features:</h4>
+                            <div id="featuresList" class="space-y-2"></div>
+                        </div>
+
+                        <!-- Chart -->
+                        <div class="mt-6">
+                            <canvas id="analysisChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Plagiarism Results -->
+                <div id="plagiarismResults" class="hidden">
+                    <div class="glass-effect rounded-xl p-6 shadow-lg fade-in mt-6">
+                        <h3 class="text-xl font-semibold mb-4 flex items-center">
+                            <i class="fas fa-shield-alt text-red-600 mr-2"></i>
+                            Plagiarism Check Results
+                        </h3>
+                        
+                        <!-- Overall Similarity Score -->
+                        <div class="flex items-center justify-between mb-6 pb-4 border-b">
+                            <div class="text-center flex-1">
+                                <div class="text-5xl font-bold text-red-600" id="similarityDisplay">0%</div>
+                                <div class="text-sm text-gray-600 mt-1">Overall Similarity</div>
+                            </div>
+                            <div class="text-center flex-1 border-l">
+                                <div class="text-3xl font-bold text-green-600" id="originalityScore">100%</div>
+                                <div class="text-sm text-gray-600 mt-1">Originality Score</div>
+                            </div>
+                            <div class="text-center flex-1 border-l">
+                                <div class="text-3xl font-bold text-blue-600" id="totalSources">0</div>
+                                <div class="text-sm text-gray-600 mt-1">Sources Found</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Analysis Text -->
+                        <div class="mb-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                            <p id="plagiarismAnalysisText" class="text-gray-700"></p>
+                        </div>
+                        
+                        <!-- Match Groups (Turnitin-style) -->
+                        <div class="mb-6">
+                            <h4 class="font-semibold mb-3 text-gray-800 flex items-center">
+                                <i class="fas fa-layer-group mr-2"></i>
+                                Match Groups
+                            </h4>
+                            <div class="grid grid-cols-3 gap-3">
+                                <!-- Not Cited -->
+                                <div class="bg-red-50 rounded-lg p-3 border border-red-200">
+                                    <div class="flex items-center mb-2">
+                                        <i class="fas fa-exclamation-circle text-red-500 mr-2"></i>
+                                        <span class="font-medium text-red-700">Not Cited</span>
+                                    </div>
+                                    <div class="text-2xl font-bold text-red-600" id="notCitedCount">0</div>
+                                    <div class="text-xs text-gray-600 mt-1">matches</div>
+                                    <div class="text-sm font-semibold text-red-700 mt-1" id="notCitedPercent">0%</div>
+                                </div>
+                                
+                                <!-- Cited -->
+                                <div class="bg-green-50 rounded-lg p-3 border border-green-200">
+                                    <div class="flex items-center mb-2">
+                                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                        <span class="font-medium text-green-700">Cited & Quoted</span>
+                                    </div>
+                                    <div class="text-2xl font-bold text-green-600" id="citedCount">0</div>
+                                    <div class="text-xs text-gray-600 mt-1">matches</div>
+                                    <div class="text-sm font-semibold text-green-700 mt-1" id="citedPercent">0%</div>
+                                </div>
+                                
+                                <!-- Internal Repetition -->
+                                <div class="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
+                                    <div class="flex items-center mb-2">
+                                        <i class="fas fa-copy text-yellow-500 mr-2"></i>
+                                        <span class="font-medium text-yellow-700">Self-Matches</span>
+                                    </div>
+                                    <div class="text-2xl font-bold text-yellow-600" id="internalCount">0</div>
+                                    <div class="text-xs text-gray-600 mt-1">matches</div>
+                                    <div class="text-sm font-semibold text-yellow-700 mt-1" id="internalPercent">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Sources List -->
+                        <div class="mb-6">
+                            <h4 class="font-semibold mb-3 text-gray-800 flex items-center">
+                                <i class="fas fa-database mr-2"></i>
+                                Sources Found
+                            </h4>
+                            <div id="sourcesList" class="space-y-2 max-h-64 overflow-y-auto">
+                                <!-- Sources will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Detailed Matches -->
+                        <div id="detailedMatchesContainer" class="hidden">
+                            <h4 class="font-semibold mb-3 text-gray-800 flex items-center">
+                                <i class="fas fa-list mr-2"></i>
+                                Detailed Matches
+                            </h4>
+                            <div id="detailedMatchesList" class="space-y-3 max-h-80 overflow-y-auto">
+                                <!-- Matches will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="loadingContainer" class="hidden">
+                    <div class="glass-effect rounded-xl p-12 shadow-lg text-center">
+                        <div class="loading-spinner mx-auto mb-4"></div>
+                        <p class="text-lg font-medium">Analyzing content...</p>
+                        <p class="text-sm text-gray-600 mt-2">This may take a few moments</p>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="glass-effect rounded-xl p-12 shadow-lg text-center">
+                    <i class="fas fa-clipboard text-6xl text-gray-300 mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-600 mb-2">No Analysis Yet</h3>
+                    <p class="text-sm text-gray-500">Enter your text or upload a file to get started</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-12 py-6">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-sm">© 2024 AI Content Detector | Academic Integrity Tool</p>
+            <p class="text-xs text-gray-400 mt-2">Powered by advanced machine learning models</p>
+        </div>
+    </footer>
+
+    <script>
+        // Global variables
+        let analysisChart = null;
+
+        // Character and word counter with 1200 word limit
+        const textInput = document.getElementById('textInput');
+        const charCount = document.getElementById('charCount');
+        const wordCount = document.getElementById('wordCount');
+        const wordLimitWarning = document.getElementById('wordLimitWarning');
+        const MAX_WORDS = 1200;
+
+        textInput.addEventListener('input', function() {
+            const text = this.value;
+            const words = text.trim() ? text.trim().split(/\s+/) : [];
+            const wordCountNum = words.length;
+            
+            charCount.textContent = text.length;
+            wordCount.textContent = wordCountNum;
+            
+            // Check word limit
+            if (wordCountNum > MAX_WORDS) {
+                wordLimitWarning.classList.remove('hidden');
+                wordCount.classList.add('text-red-600');
+                // Truncate text to 1200 words
+                const truncatedText = words.slice(0, MAX_WORDS).join(' ');
+                this.value = truncatedText;
+                wordCount.textContent = MAX_WORDS;
+            } else {
+                wordLimitWarning.classList.add('hidden');
+                wordCount.classList.remove('text-red-600');
+            }
+        });
+
+        // File upload handling
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                fileInfo.textContent = `Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                fileInfo.classList.remove('hidden');
+            }
+        });
+
+        // Drag and drop
+        const dropZone = fileInput.parentElement;
+
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('border-purple-500', 'bg-purple-50');
+        });
+
+        dropZone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('border-purple-500', 'bg-purple-50');
+        });
+
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('border-purple-500', 'bg-purple-50');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                const event = new Event('change', { bubbles: true });
+                fileInput.dispatchEvent(event);
+            }
+        });
+
+        // Analysis function
+        async function analyzeContent() {
+            const text = textInput.value.trim();
+            const file = fileInput.files[0];
+
+            if (!text && !file) {
+                alert('Please enter text or upload a file for analysis');
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('resultsContainer').classList.add('hidden');
+            document.getElementById('loadingContainer').classList.remove('hidden');
+
+            // Create FormData
+            const formData = new FormData();
+            if (text) formData.append('text', text);
+            if (file) formData.append('file', file);
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Analysis failed');
+                }
+
+                const result = await response.json();
+                displayResults(result);
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Analysis failed. Please try again.');
+            } finally {
+                document.getElementById('loadingContainer').classList.add('hidden');
+            }
+        }
+
+        // Display results
+        function displayResults(result) {
+            // Update main probability display
+            const probability = result.ai_probability;
+            const percentage = Math.round(probability * 100);
+            
+            document.getElementById('probabilityDisplay').textContent = percentage + '%';
+            
+            // Update probability bar
+            const bar = document.getElementById('probabilityBar');
+            bar.style.width = percentage + '%';
+            
+            // Set bar color based on probability
+            if (probability > 0.7) {
+                bar.className = 'h-full transition-all duration-1000 ease-out ai-high';
+            } else if (probability > 0.3) {
+                bar.className = 'h-full transition-all duration-1000 ease-out ai-medium';
+            } else {
+                bar.className = 'h-full transition-all duration-1000 ease-out ai-low';
+            }
+
+            // Update confidence
+            const confidenceBadge = document.getElementById('confidenceBadge');
+            const confidenceText = document.getElementById('confidenceText');
+            confidenceText.textContent = result.confidence.charAt(0).toUpperCase() + result.confidence.slice(1);
+            
+            // Set confidence badge color
+            confidenceBadge.className = 'mb-4 p-4 rounded-lg';
+            if (result.confidence === 'high') {
+                confidenceBadge.classList.add('bg-green-100', 'text-green-800');
+            } else if (result.confidence === 'medium') {
+                confidenceBadge.classList.add('bg-yellow-100', 'text-yellow-800');
+            } else {
+                confidenceBadge.classList.add('bg-gray-100', 'text-gray-800');
+            }
+
+            // Update analysis text
+            document.getElementById('analysisText').textContent = result.analysis;
+
+            // Update statistics
+            document.getElementById('textLength').textContent = result.text_length.toLocaleString();
+            document.getElementById('wordCountResult').textContent = result.word_count.toLocaleString();
+
+            // Display model scores
+            const modelScoresList = document.getElementById('modelScoresList');
+            modelScoresList.innerHTML = '';
+            
+            for (const [model, score] of Object.entries(result.model_scores)) {
+                const scoreDiv = document.createElement('div');
+                scoreDiv.className = 'flex items-center justify-between p-2 bg-gray-50 rounded';
+                scoreDiv.innerHTML = `
+                    <span class="text-sm font-medium">${model.charAt(0).toUpperCase() + model.slice(1)}:</span>
+                    <span class="text-sm font-semibold">${Math.round(score * 100)}%</span>
+                `;
+                modelScoresList.appendChild(scoreDiv);
+            }
+
+            // Display linguistic features
+            const featuresList = document.getElementById('featuresList');
+            featuresList.innerHTML = '';
+            
+            const featureLabels = {
+                'avg_sentence_length': 'Avg Sentence Length',
+                'vocab_diversity': 'Vocabulary Diversity',
+                'punctuation_ratio': 'Punctuation Ratio',
+                'repetition_score': 'Repetition Score'
+            };
+
+            for (const [feature, value] of Object.entries(result.features)) {
+                const featureDiv = document.createElement('div');
+                featureDiv.className = 'flex items-center justify-between p-2 bg-gray-50 rounded';
+                const label = featureLabels[feature] || feature;
+                const displayValue = typeof value === 'number' ? value.toFixed(3) : value;
+                featureDiv.innerHTML = `
+                    <span class="text-sm">${label}:</span>
+                    <span class="text-sm font-medium">${displayValue}</span>
+                `;
+                featuresList.appendChild(featureDiv);
+            }
+
+            // Update chart
+            updateChart(result);
+
+            // Show results
+            document.getElementById('resultsContainer').classList.remove('hidden');
+        }
+
+        // Update chart
+        function updateChart(result) {
+            const ctx = document.getElementById('analysisChart').getContext('2d');
+            
+            // Destroy existing chart
+            if (analysisChart) {
+                analysisChart.destroy();
+            }
+
+            // Prepare data
+            const labels = ['AI Content', 'Human Content'];
+            const data = [result.ai_probability, 1 - result.ai_probability];
+
+            analysisChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            result.ai_probability > 0.5 ? '#ff6b6b' : '#48dbfb',
+                            result.ai_probability <= 0.5 ? '#ff6b6b' : '#48dbfb'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + Math.round(context.parsed * 100) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Event listeners
+        document.getElementById('analyzeBtn').addEventListener('click', analyzeContent);
+
+        // Sentence analysis functionality
+        document.getElementById('sentenceAnalysisBtn').addEventListener('click', analyzeSentences);
+
+        async function analyzeSentences() {
+            const text = textInput.value.trim();
+            const file = fileInput.files[0];
+
+            if (!text && !file) {
+                alert('Please enter text or upload a file for sentence analysis');
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('resultsContainer').classList.add('hidden');
+            document.getElementById('sentenceAnalysisResults').classList.add('hidden');
+            document.getElementById('loadingContainer').classList.remove('hidden');
+
+            // Create FormData
+            const formData = new FormData();
+            if (text) formData.append('text', text);
+            if (file) formData.append('file', file);
+
+            try {
+                const response = await fetch('/analyze_sentences', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    throw new Error(`Sentence analysis failed: ${response.status} ${errorText}`);
+                }
+
+                const result = await response.json();
+                console.log('Result:', result);
+                displaySentenceAnalysisResults(result);
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Sentence analysis failed: ' + error.message);
+            } finally {
+                document.getElementById('loadingContainer').classList.add('hidden');
+            }
+        }
+
+        function displaySentenceAnalysisResults(result) {
+            try {
+                console.log('displaySentenceAnalysisResults called with:', result);
+                
+                // Check if result has required properties
+                if (!result || !result.categories || !result.sentences) {
+                    console.error('Invalid result structure:', result);
+                    alert('Error: Invalid response from server');
+                    return;
+                }
+                
+                // Check if elements exist
+                const slightlyCountEl = document.getElementById('slightlyCount');
+                const highCountEl = document.getElementById('highCount');
+                const veryHighCountEl = document.getElementById('veryHighCount');
+                const highlightedTextEl = document.getElementById('highlightedText');
+                const sentenceDetailsEl = document.getElementById('sentenceDetails');
+                const sentenceResultsEl = document.getElementById('sentenceAnalysisResults');
+                
+                console.log('Elements found:', {
+                    slightlyCount: !!slightlyCountEl,
+                    highCount: !!highCountEl,
+                    veryHighCount: !!veryHighCountEl,
+                    highlightedText: !!highlightedTextEl,
+                    sentenceDetails: !!sentenceDetailsEl,
+                    sentenceAnalysisResults: !!sentenceResultsEl
+                });
+                
+                // Update counts
+                if (slightlyCountEl) slightlyCountEl.textContent = result.categories.low.length;
+                if (highCountEl) highCountEl.textContent = result.categories.medium.length;
+                if (veryHighCountEl) veryHighCountEl.textContent = result.categories.high.length;
+
+                // Create highlighted text
+                const highlightedText = createHighlightedText(result.sentences);
+                console.log('highlightedText:', highlightedText);
+                if (highlightedTextEl) highlightedTextEl.innerHTML = highlightedText;
+
+                // Create sentence details
+                const sentenceDetails = createSentenceDetails(result.sentences);
+                console.log('sentenceDetails length:', sentenceDetails.length);
+                if (sentenceDetailsEl) sentenceDetailsEl.innerHTML = sentenceDetails;
+
+                // Show results - need to show both containers since sentenceAnalysisResults is nested
+                const resultsContainer = document.getElementById('resultsContainer');
+                if (resultsContainer) {
+                    resultsContainer.classList.remove('hidden');
+                    console.log('resultsContainer shown');
+                }
+                
+                if (sentenceResultsEl) {
+                    sentenceResultsEl.classList.remove('hidden');
+                    console.log('sentenceAnalysisResults shown');
+                } else {
+                    console.error('sentenceAnalysisResults element not found!');
+                }
+            } catch (error) {
+                console.error('Error in displaySentenceAnalysisResults:', error);
+                alert('Error displaying results: ' + error.message);
+            }
+        }
+
+        function createHighlightedText(sentences) {
+            let highlightedText = '';
+            
+            sentences.forEach((sentence, index) => {
+                const backgroundColor = sentence.color;
+                const textColor = sentence.category === 'high' ? 'white' : 'black';
+                const tooltip = `AI Probability: ${Math.round(sentence.ai_probability * 100)}% - ${sentence.label}`;
+                
+                highlightedText += `<span class="sentence-highlight" style="background-color: ${backgroundColor}; color: ${textColor}; padding: 2px 4px; border-radius: 3px; cursor: pointer;" title="${tooltip}" data-index="${index}">${sentence.text}.</span> `;
+            });
+            
+            return highlightedText;
+        }
+
+        function createSentenceDetails(sentences) {
+            let detailsHTML = '';
+            
+            sentences.forEach((sentence, index) => {
+                const categoryColors = {
+                    'low': 'blue',
+                    'medium': 'yellow',
+                    'high': 'red'
+                };
+                
+                const color = categoryColors[sentence.category];
+                
+                detailsHTML += `
+                    <div class="border rounded-lg p-4 mb-4" style="border-left: 4px solid ${sentence.color};">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium text-${color}-600">${sentence.label} AI Content</span>
+                            <span class="text-sm text-gray-500">${Math.round(sentence.ai_probability * 100)}% AI Probability</span>
+                        </div>
+                        
+                        <div class="mb-3 p-3 bg-gray-50 rounded text-sm">
+                            "${sentence.text}"
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <h5 class="font-medium text-sm">Suggestions to Humanize:</h5>
+                            ${sentence.suggestions.map(suggestion => `
+                                <div class="p-3 bg-${color}-50 rounded border-l-2 border-${color}-300">
+                                    <div class="flex items-start space-x-2">
+                                        <i class="fas fa-lightbulb text-${color}-500 mt-1"></i>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-medium">${suggestion.suggestion}</p>
+                                            <p class="text-xs text-gray-600 mt-1 italic">Example: ${suggestion.example}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <button class="mt-3 text-sm bg-${color}-600 text-white px-3 py-1 rounded hover:bg-${color}-700" onclick="applySuggestion(${index})">
+                            <i class="fas fa-magic mr-1"></i> Apply Best Suggestion
+                        </button>
+                    </div>
+                `;
+            });
+            
+            return detailsHTML;
+        }
+
+        function applySuggestion(sentenceIndex) {
+            // This function would apply the best suggestion to the text
+            // For now, we'll just show an alert
+            alert('Suggestion application feature coming soon! This would automatically rewrite the selected sentence.');
+        }
+
+        // Plagiarism check functionality
+        document.getElementById('plagiarismBtn').addEventListener('click', checkPlagiarism);
+
+        async function checkPlagiarism() {
+            const text = textInput.value.trim();
+            const file = fileInput.files[0];
+
+            if (!text && !file) {
+                alert('Please enter text or upload a file for plagiarism check');
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('resultsContainer').classList.add('hidden');
+            document.getElementById('plagiarismResults').classList.add('hidden');
+            document.getElementById('loadingContainer').classList.remove('hidden');
+
+            // Create FormData
+            const formData = new FormData();
+            if (text) formData.append('text', text);
+            if (file) formData.append('file', file);
+
+            try {
+                const response = await fetch('/check_plagiarism', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('Plagiarism check response status:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Plagiarism check error:', errorText);
+                    throw new Error(`Plagiarism check failed: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('Plagiarism result:', result);
+                displayPlagiarismResults(result);
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Plagiarism check failed: ' + error.message);
+            } finally {
+                document.getElementById('loadingContainer').classList.add('hidden');
+            }
+        }
+
+        function displayPlagiarismResults(result) {
+            try {
+                console.log('Plagiarism result:', result);
+                
+                // Update main scores
+                const similarity = result.similarity_percentage || 0;
+                document.getElementById('similarityDisplay').textContent = similarity + '%';
+                document.getElementById('originalityScore').textContent = (result.originality_score || (100 - similarity)) + '%';
+                document.getElementById('totalSources').textContent = result.total_sources || 0;
+                
+                // Update analysis text
+                document.getElementById('plagiarismAnalysisText').textContent = result.analysis || 'Analysis completed.';
+                
+                // Update match groups
+                const matchGroups = result.match_groups || {};
+                
+                // Not Cited
+                const notCited = matchGroups.not_cited || { count: 0, percentage: 0 };
+                document.getElementById('notCitedCount').textContent = notCited.count;
+                document.getElementById('notCitedPercent').textContent = notCited.percentage + '%';
+                
+                // Cited
+                const cited = matchGroups.cited || { count: 0, percentage: 0 };
+                document.getElementById('citedCount').textContent = cited.count;
+                document.getElementById('citedPercent').textContent = cited.percentage + '%';
+                
+                // Internal
+                const internal = matchGroups.internal || { count: 0, percentage: 0 };
+                document.getElementById('internalCount').textContent = internal.count;
+                document.getElementById('internalPercent').textContent = internal.percentage + '%';
+                
+                // Update sources list
+                const sourcesList = document.getElementById('sourcesList');
+                const sources = result.sources || [];
+                
+                if (sources.length > 0) {
+                    sourcesList.innerHTML = sources.map((source, index) => `
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                            <div class="flex items-center flex-1 min-w-0">
+                                <div class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-sm font-bold mr-3 shrink-0">
+                                    ${index + 1}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="font-medium text-gray-800 truncate">${source.title}</div>
+                                    <div class="text-xs text-gray-500 truncate">${source.url || 'Unknown source'}</div>
+                                    <div class="flex items-center mt-1 space-x-3 text-xs">
+                                        <span class="bg-red-100 text-red-700 px-2 py-0.5 rounded">${source.similarity}% match</span>
+                                        <span class="text-gray-600">${source.match_count} text block${source.match_count !== 1 ? 's' : ''}</span>
+                                        ${source.type === 'student_papers' ? '<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Student Paper</span>' : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    sourcesList.innerHTML = '<div class="p-4 bg-gray-50 rounded-lg text-center text-gray-500">No external sources found</div>';
+                }
+                
+                // Show detailed matches if any
+                const detailedContainer = document.getElementById('detailedMatchesContainer');
+                const detailedList = document.getElementById('detailedMatchesList');
+                const allMatches = [...(notCited.matches || []), ...(cited.matches || []), ...(internal.matches || [])];
+                
+                if (allMatches.length > 0) {
+                    detailedContainer.classList.remove('hidden');
+                    detailedList.innerHTML = allMatches.map((match, index) => {
+                        const isCited = match.is_cited;
+                        const isInternal = match.match_type === 'internal_repetition';
+                        const colorClass = isInternal ? 'yellow' : (isCited ? 'green' : 'red');
+                        const icon = isInternal ? 'fa-copy' : (isCited ? 'fa-check-circle' : 'fa-exclamation-circle');
+                        
+                        return `
+                        <div class="border-l-4 border-${colorClass}-500 pl-3 py-2 bg-${colorClass}-50 rounded">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs font-semibold text-${colorClass}-600">
+                                    <i class="fas ${icon} mr-1"></i>
+                                    ${isInternal ? 'Self-Match' : (isCited ? 'Cited Match' : 'Not Cited')}
+                                </span>
+                                <span class="text-xs bg-${colorClass}-200 text-${colorClass}-800 px-2 py-1 rounded">${match.similarity}% Similar</span>
+                            </div>
+                            <p class="text-sm text-gray-800 italic mb-2">"${match.sentence}"</p>
+                            ${match.source_title ? `
+                            <div class="text-xs text-gray-600 mt-1">
+                                <i class="fas fa-link mr-1"></i>
+                                Source: <span class="font-medium">${match.source_title}</span>
+                            </div>
+                            ` : ''}
+                            ${match.matched_sentence ? `
+                            <div class="text-xs text-gray-500 mt-1">
+                                Similar to: "${match.matched_sentence.substring(0, 100)}..."
+                            </div>
+                            ` : ''}
+                        </div>
+                        `;
+                    }).join('');
+                } else {
+                    detailedContainer.classList.add('hidden');
+                }
+
+                // Show results
+                document.getElementById('plagiarismResults').classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Error in displayPlagiarismResults:', error);
+                alert('Error displaying plagiarism results: ' + error.message);
+            }
+        }
+
+        // Allow Enter key to analyze (with Shift+Enter for new line)
+        textInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                analyzeContent();
+            }
+        });
+
+        // Check health on page load
+        fetch('/health')
+            .then(response => response.json())
+            .then(data => {
+                console.log('System health:', data);
+            })
+            .catch(error => {
+                console.error('Health check failed:', error);
+            });
+    </script>
+</body>
+</html>
